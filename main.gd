@@ -88,6 +88,7 @@ func _build_runtime_ui() -> void:
 	background_rect.color = Color(0.16, 0.16, 0.18, 1.0)
 	background_rect.position = Vector2.ZERO
 	background_rect.size = viewport_size
+	background_rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(background_rect)
 
 	status_label = Label.new()
