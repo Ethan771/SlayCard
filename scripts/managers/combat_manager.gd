@@ -42,11 +42,13 @@ func start_combat(enemy: EnemyData) -> void:
 		push_error("CombatManager requires a GameManager reference before start_combat().")
 		return
 
+func start_combat(enemy: EnemyData) -> void:
 	current_state = CombatState.STARTING
 	current_enemy = enemy
 	enemy_current_health = current_enemy.max_health
 
 	draw_pile = game_manager.deck.duplicate()
+	draw_pile = GameManager.deck.duplicate()
 	draw_pile.shuffle()
 	hand.clear()
 	discard_pile.clear()
@@ -148,4 +150,8 @@ func _resolve_enemy_turn() -> void:
 	emit_signal("player_health_changed", game_manager.player_current_health, game_manager.player_max_health)
 
 	if game_manager.player_current_health <= 0:
+	GameManager.player_current_health = maxi(0, GameManager.player_current_health - mitigated_damage)
+	emit_signal("player_health_changed", GameManager.player_current_health, GameManager.player_max_health)
+
+	if GameManager.player_current_health <= 0:
 		current_state = CombatState.LOST
