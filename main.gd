@@ -169,9 +169,16 @@ func _combat_state_to_text(state: CombatManager.CombatState) -> String:
 			return "Unknown"
 
 
-func _on_card_played(card: CardData) -> void:
-	combat_manager.play_card(card)
-	update_ui()
+func _on_card_played(card: CardData, ui_node: Control) -> void:
+	var played_successfully: bool = combat_manager.play_card(card)
+
+	if played_successfully:
+		ui_node.queue_free()
+		update_ui()
+		return
+
+	if ui_node is CardUI:
+		(ui_node as CardUI).reset_to_original_position()
 
 
 func _on_hand_updated(_current_hand: Array[CardData]) -> void:
