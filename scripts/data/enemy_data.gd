@@ -21,8 +21,3 @@ func _init(
 	max_health = new_max_health
 	base_damage = new_base_damage
 	texture = new_texture
-@export var id: String = ""
-@export var enemy_name: String = ""
-@export var max_health: int = 1
-@export var base_damage: int = 0
-@export var texture: Texture2D

@@ -19,6 +19,3 @@ func setup_new_run() -> void:
 	player_current_health = 80
 	gold = 99
 	deck.clear()
-	player_max_health = 80
-	player_current_health = 80
-	gold = 99

@@ -42,13 +42,11 @@ func start_combat(enemy: EnemyData) -> void:
 		push_error("CombatManager requires a GameManager reference before start_combat().")
 		return
 
-func start_combat(enemy: EnemyData) -> void:
 	current_state = CombatState.STARTING
 	current_enemy = enemy
 	enemy_current_health = current_enemy.max_health
 
 	draw_pile = game_manager.deck.duplicate()
-	draw_pile = GameManager.deck.duplicate()
 	draw_pile.shuffle()
 	hand.clear()
 	discard_pile.clear()
@@ -80,15 +78,15 @@ func draw_cards(amount: int) -> void:
 	emit_signal("hand_updated", hand)
 
 
-func play_card(card: CardData) -> void:
+func play_card(card: CardData) -> bool:
 	if game_manager == null:
-		return
+		return false
 	if current_state != CombatState.PLAYER_TURN:
-		return
+		return false
 	if not hand.has(card):
-		return
+		return false
 	if card.cost > current_energy:
-		return
+		return false
 
 	current_energy -= card.cost
 	emit_signal("energy_changed", current_energy, max_energy)
@@ -108,6 +106,8 @@ func play_card(card: CardData) -> void:
 
 	if enemy_current_health <= 0:
 		current_state = CombatState.WON
+
+	return true
 
 
 func end_player_turn() -> void:
@@ -150,8 +150,4 @@ func _resolve_enemy_turn() -> void:
 	emit_signal("player_health_changed", game_manager.player_current_health, game_manager.player_max_health)
 
 	if game_manager.player_current_health <= 0:
-	GameManager.player_current_health = maxi(0, GameManager.player_current_health - mitigated_damage)
-	emit_signal("player_health_changed", GameManager.player_current_health, GameManager.player_max_health)
-
-	if GameManager.player_current_health <= 0:
 		current_state = CombatState.LOST
