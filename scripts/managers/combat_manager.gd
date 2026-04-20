@@ -78,15 +78,15 @@ func draw_cards(amount: int) -> void:
 	emit_signal("hand_updated", hand)
 
 
-func play_card(card: CardData) -> void:
+func play_card(card: CardData) -> bool:
 	if game_manager == null:
-		return
+		return false
 	if current_state != CombatState.PLAYER_TURN:
-		return
+		return false
 	if not hand.has(card):
-		return
+		return false
 	if card.cost > current_energy:
-		return
+		return false
 
 	current_energy -= card.cost
 	emit_signal("energy_changed", current_energy, max_energy)
@@ -106,6 +106,8 @@ func play_card(card: CardData) -> void:
 
 	if enemy_current_health <= 0:
 		current_state = CombatState.WON
+
+	return true
 
 
 func end_player_turn() -> void:

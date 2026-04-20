@@ -2,7 +2,7 @@ extends Control
 class_name CardUI
 
 
-signal card_played(card: CardData)
+signal card_played(card: CardData, ui_node: Control)
 
 
 var card_data: CardData
@@ -15,6 +15,7 @@ var description_label: Label
 var is_dragging: bool = false
 var drag_offset: Vector2 = Vector2.ZERO
 var original_position: Vector2 = Vector2.ZERO
+var base_z_index: int = 0
 
 
 func _ready() -> void:
@@ -23,6 +24,7 @@ func _ready() -> void:
 	custom_minimum_size = Vector2(220.0, 320.0)
 	size = custom_minimum_size
 	original_position = position
+	base_z_index = z_index
 
 	_build_visual_nodes()
 	_apply_card_data()
@@ -86,18 +88,33 @@ func _handle_mouse_button(event: InputEventMouseButton) -> void:
 	if event.pressed:
 		# 开始拖拽时记录偏移，避免卡牌瞬移。
 		is_dragging = true
-		drag_offset = global_position - get_global_mouse_position()
+		drag_offset = get_global_mouse_position() - global_position
 		original_position = position
+		base_z_index = z_index
+		z_index = 100
 	else:
 		if not is_dragging:
 			return
 
 		is_dragging = false
+		z_index = base_z_index
 
-		# 松开鼠标时通知外部并先复位。
-		if card_data != null:
-			emit_signal("card_played", card_data)
-		position = original_position
+		# 上半屏视为尝试打牌，否则回弹到原位。
+		if global_position.y < 300.0 and card_data != null:
+			emit_signal("card_played", card_data, self)
+		else:
+			_snap_back_to_original_position()
+
+
+func _snap_back_to_original_position() -> void:
+	var tween: Tween = create_tween()
+	tween.tween_property(self, "position", original_position, 0.12)
+	tween.finished.connect(reset_to_original_position)
+
+
+func reset_to_original_position() -> void:
+	position = original_position
+	z_index = base_z_index
 
 
 func _handle_mouse_motion(_event: InputEventMouseMotion) -> void:
@@ -105,4 +122,4 @@ func _handle_mouse_motion(_event: InputEventMouseMotion) -> void:
 		return
 
 	# 拖拽中让卡牌跟随鼠标。
-	global_position = get_global_mouse_position() + drag_offset
+	global_position = get_global_mouse_position() - drag_offset
