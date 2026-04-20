@@ -88,7 +88,7 @@ func _handle_mouse_button(event: InputEventMouseButton) -> void:
 	if event.pressed:
 		# 开始拖拽时记录偏移，避免卡牌瞬移。
 		is_dragging = true
-		drag_offset = global_position - get_global_mouse_position()
+		drag_offset = get_global_mouse_position() - global_position
 		original_position = position
 		base_z_index = z_index
 		z_index = 100
@@ -103,7 +103,13 @@ func _handle_mouse_button(event: InputEventMouseButton) -> void:
 		if global_position.y < 300.0 and card_data != null:
 			emit_signal("card_played", card_data, self)
 		else:
-			reset_to_original_position()
+			_snap_back_to_original_position()
+
+
+func _snap_back_to_original_position() -> void:
+	var tween: Tween = create_tween()
+	tween.tween_property(self, "position", original_position, 0.12)
+	tween.finished.connect(reset_to_original_position)
 
 
 func reset_to_original_position() -> void:
@@ -116,4 +122,4 @@ func _handle_mouse_motion(_event: InputEventMouseMotion) -> void:
 		return
 
 	# 拖拽中让卡牌跟随鼠标。
-	global_position = get_global_mouse_position() + drag_offset
+	global_position = get_global_mouse_position() - drag_offset
