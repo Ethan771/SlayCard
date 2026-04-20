@@ -17,6 +17,8 @@ enum CombatState {
 }
 
 
+var game_manager: GameManager
+
 var current_state: CombatState = CombatState.STARTING
 var current_enemy: EnemyData
 var enemy_current_health: int = 0
@@ -31,12 +33,20 @@ var max_energy: int = 3
 var current_block: int = 0
 
 
+func setup(game_manager_ref: GameManager) -> void:
+	game_manager = game_manager_ref
+
+
 func start_combat(enemy: EnemyData) -> void:
+	if game_manager == null:
+		push_error("CombatManager requires a GameManager reference before start_combat().")
+		return
+
 	current_state = CombatState.STARTING
 	current_enemy = enemy
 	enemy_current_health = current_enemy.max_health
 
-	draw_pile = GameManager.deck.duplicate()
+	draw_pile = game_manager.deck.duplicate()
 	draw_pile.shuffle()
 	hand.clear()
 	discard_pile.clear()
@@ -44,6 +54,7 @@ func start_combat(enemy: EnemyData) -> void:
 
 	_start_player_turn()
 	emit_signal("enemy_health_changed", enemy_current_health, current_enemy.max_health)
+	emit_signal("player_health_changed", game_manager.player_current_health, game_manager.player_max_health)
 
 
 func draw_cards(amount: int) -> void:
@@ -67,13 +78,15 @@ func draw_cards(amount: int) -> void:
 	emit_signal("hand_updated", hand)
 
 
-func play_card(card: CardData) -> void:
+func play_card(card: CardData) -> bool:
+	if game_manager == null:
+		return false
 	if current_state != CombatState.PLAYER_TURN:
-		return
+		return false
 	if not hand.has(card):
-		return
+		return false
 	if card.cost > current_energy:
-		return
+		return false
 
 	current_energy -= card.cost
 	emit_signal("energy_changed", current_energy, max_energy)
@@ -93,6 +106,8 @@ func play_card(card: CardData) -> void:
 
 	if enemy_current_health <= 0:
 		current_state = CombatState.WON
+
+	return true
 
 
 func end_player_turn() -> void:
@@ -122,6 +137,8 @@ func _start_player_turn() -> void:
 
 
 func _resolve_enemy_turn() -> void:
+	if game_manager == null:
+		return
 	if current_enemy == null:
 		return
 
@@ -129,8 +146,8 @@ func _resolve_enemy_turn() -> void:
 	var mitigated_damage: int = maxi(0, incoming_damage - current_block)
 	current_block = maxi(0, current_block - incoming_damage)
 
-	GameManager.player_current_health = maxi(0, GameManager.player_current_health - mitigated_damage)
-	emit_signal("player_health_changed", GameManager.player_current_health, GameManager.player_max_health)
+	game_manager.player_current_health = maxi(0, game_manager.player_current_health - mitigated_damage)
+	emit_signal("player_health_changed", game_manager.player_current_health, game_manager.player_max_health)
 
-	if GameManager.player_current_health <= 0:
+	if game_manager.player_current_health <= 0:
 		current_state = CombatState.LOST
